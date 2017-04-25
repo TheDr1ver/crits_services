@@ -12,7 +12,6 @@ from datetime import datetime
 def gather_relationships(obj_type, obj_id, user, depth, types):
     objects = {}
     nodes = []
-    links = []
     tlos = {
         'Actor': [],
         'Backdoor': [],
@@ -30,13 +29,10 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
         'Sample': [],
         'Target': []
     }
-    # These would be used if we move to force labels
-    #labelAnchors = []
-    #labelAnchorLinks = []
-
+    
     sources = user_sources(user)
     if not sources:
-        return { 'nodes': nodes, 'links': links }
+        return { 'nodes': nodes }
 
     field_dict = {
         'Actor': 'name',
@@ -56,122 +52,6 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
         'Target': 'email_address'
     }
 
-    # Define the styles for each of the data types. Absent these, the vis.js library will
-    # auto-select sensible defaults
-    tlo_styles_dict = {
-        'Actor': {
-            'shape': 'dot',
-            'size': 25,
-            'color': '#900C0C',
-            'color_border': '#700C0C',
-            'color_highlight': '#90FCFC',
-            'color_highlight_border': '#900C0C'
-        },
-        'Backdoor': {
-            'shape': 'dot',
-            'size': 10,
-            'color': '#5A2C75',
-            'color_border': '#3A1C55',
-            'color_highlight': '#7040B0',
-            'color_highlight_border': '#5A2C75'
-        },
-        'Campaign': {
-            'shape': 'dot',
-            'size': 40,
-            'color': '#FF3737',
-            'color_border': '#D72020',
-            'color_highlight': '#FF6868',
-            'color_highlight_border': '#FF3737'
-        },
-        'Certificate': {
-            'shape': 'dot',
-            'size': 10,
-            'color': '#FFA837',
-            'color_border': '#D08020',
-            'color_highlight': '#FFC060',
-            'color_highlight_border': '#FFA837'
-        },
-        'Domain': {
-            'shape': 'dot',
-            'size': 20,
-            'color': '#33EB33',
-            'color_border': '#25C025',
-            'color_highlight': '#55FF55',
-            'color_highlight_border': '#33EB33'
-        },
-        'Email': {
-            'shape': 'dot',
-            'size': 25,
-            'color': '#FF8989',
-            'color_border': '#CF7070',
-            'color_highlight': '#FFB0B0',
-            'color_highlight_border': '#FF8989'
-        },
-        'Event': {
-            'shape': 'dot',
-            'size': 35,
-            'color': '#B05151',
-            'color_border': '#904040',
-            'color_highlight': '#D07171',
-            'color_highlight_border': '#B05151'
-        },
-        'Exploit': {
-            'shape': 'dot',
-            'size': 10,
-            'color': '#8CA336',
-            'color_border': '#709020',
-            'color_highlight': '#A8CC60',
-            'color_highlight_border': '#8CA336'
-        },
-        'Indicator': {
-            'shape': 'dot',
-            'size': 10,
-            'color': '#B08751',
-            'color_border': '#907050',
-            'color_highlight': '#CCA075',
-            'color_highlight_border': '#B08751'
-        },
-        'IP': {
-            'shape': 'dot',
-            'size': 20,
-            'color': '#90570C',
-            'color_border': '#77400C',
-            'color_highlight': '#B06037',
-            'color_highlight_border': '#90570C'
-        },
-        'PCAP': {
-            'shape': 'dot',
-            'size': 10,
-            'color': '#FFCC89',
-            'color_border': '#D0A860',
-            'color_highlight': '#FFE0B0',
-            'color_highlight_border': '#FFCC89'
-        },
-        'Raw Data': {
-            'shape': 'dot',
-            'size': 10,
-            'color': '#4A7797',
-            'color_border': '#306080',
-            'color_highlight': '#6090B8',
-            'color_highlight_border': '#4A7797'
-        },
-        'Sample': {
-            'shape': 'dot',
-            'size': 25,
-            'color': '#8CCBF8',
-            'color_border': '#70AADC',
-            'color_highlight': '#A0D0FF',
-            'color_highlight_border': '#8CCBF8'
-        },
-        'Target': {
-            'shape': 'dot',
-            'size': 10,
-            'color': '#4AA24A',
-            'color_border': '#308030',
-            'color_highlight': '#60C860',
-            'color_highlight_border': '#4AA24A'
-        }
-    }
 
     def inner_collect(obj_type, obj_id, sources, depth):
         # Don't keep going if we've already processed this object
@@ -254,22 +134,12 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
             continue
 
         obj_type = obj._meta['crits_type']
-
-        #import pprint
-        
         obj_master = obj._meta
         
         
         klass = class_from_type(obj_type)
         obj = klass.objects(id=obj_id).first()
         
-        # YES! THIS WORKS!
-        '''
-        if obj_type=="Sample":
-            sample = obj.filename
-        else:
-            sample = vars(obj)
-        '''
         # Add the obj_id and label to the tlo_labels dict
         # e.g. tlo_labels={'<md5>': '<obj_id>'}
         label = str(obj_type+" | "+getattr(obj, field_dict[obj_type], ''))
@@ -320,7 +190,6 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
                     campaign = name + " (" + str(total) + ")"
                     campaign_href = reverse('crits.core.views.details', args=('Campaign', campaign_id))
 
-                    n = dict(tlo_styles_dict['Campaign'])
 
                     n['label'] = campaign
                     n['url'] = campaign_href
@@ -333,15 +202,6 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
 
         # n will contain the vis.js-schema data  to load into the graph
         n = {}
-        if obj_type in tlo_styles_dict:
-            n = dict(tlo_styles_dict[obj_type])
-
-            n['label'] = '%s' % value
-        else:
-            n = {
-                'label': '%s' % value,
-                'shape': 'dot'
-            }
 
         n['url'] = href
         n['crits_status'] = obj['status'];
@@ -417,49 +277,6 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
     n['tlo_labels']=tlo_labels
     n['step1']=step1
     n['tlo_relationships']=tlo_relationships
-    
-    
-    '''
-    n['tlo_labels']=pprint.pformat(tlo_labels)
-    n['step1']=pprint.pformat(step1)
-    n['tlo_relationships']=pprint.pformat(tlo_relationships)
-    '''
-    
-    
-    
-    #### END NMD Debug
-        
-    # This dictionary is used to track the links that have been created.
-    # When a new link is created the inverse is added to this dictionary as
-    # a key. This is because the link between A->B is the same as B->A. When
-    # the link for A->B is made, we insert it into this dictionary and then
-    # lookup the inverse when creating any new relationships. This ensures
-    # that when B->A is handled it will be ignored.
-    link_dict = {}
-
-    for (tid, (tnode, source_ids)) in obj_graph.iteritems():
-        for sid in source_ids:
-            # If the graph is cut off the related object may not have been
-            # collected. If the inverse relationship is already done, no
-            # need to do this one too.
-            if sid not in obj_graph or (tid + sid) in link_dict:
-                continue
-            link = {
-                     'from': sid,
-                     'to': tid
-                   }
-            links.append(link)
-            link_dict[sid + tid] = True
-        #labelAnchors.append({'node': n,
-        #                     'url': href})
-        #labelAnchors.append({'node': n,
-        #                     'url': href})
-        #alink = {
-        #         'source': (len(nodes) - 1) * 2,
-        #         'target': (len(nodes) - 1) * 2 + 1,
-        #         'weight': 1,
-        #}
-        #labelAnchorLinks.append(alink)
         
     # Get all CRITs relationship types
     from crits.vocabulary.relationships import RelationshipTypes
@@ -470,25 +287,11 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
     misp_cats = misp_obj.categories
     misp_types = misp_obj.category_type_mapping
     
-    
-    '''
-    from crits.services.service import CRITsService
-    svc_obj = CRITsService.objects(name='misp_service')
-    misp_config = svc_obj.config.to_dict()
-    '''
-    
     return {
             'nodes': nodes,
-            'links': links,
             'rel_types': rel_types,
             'misp_cats': misp_cats,
             'misp_types': misp_types,
-            #'misp_config': misp_config,
-            #'tlos': tlos,
-            #'tlo_labels': tlo_labels,
-            #'tlo_relationships': tlo_relationships,
-            #'labelAnchors': labelAnchors,
-            #'labelAnchorLinks': labelAnchorLinks,
            }
 
 def send_to_misp(misp_data, misp_configs, user):
