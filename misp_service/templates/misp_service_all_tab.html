@@ -127,8 +127,8 @@ $(document).ready(function() {
     $(document).on('click', '#change_misp', function(e) {
         $('#graph_container').empty();
         // get data from server.
-        var depth = $('#node_depth').val();
-        var types = $("#node_types option:selected").map(function(){return this.value}).get().join(",");
+        var depth = $('#misp_node_depth').val();
+        var types = $("#misp_node_types option:selected").map(function(){return this.value}).get().join(",");
         data = {
             depth: depth,
             types: types,
@@ -1034,9 +1034,9 @@ height: 1000;
     
     <div id="misp_config" class="ui-widget-content" style="display: none;">
         <div style="vertical-align: top; padding-top: 8px;">Depth:
-            <input id="node_depth" size="3" type="text" value="3" name="depth" style="vertical-align: top;"></input>
+            <input id="misp_node_depth" size="3" type="text" value="3" name="depth" style="vertical-align: top;"></input>
         </div>
-        <select id="node_types" name="types" size=11 multiple>
+        <select id="misp_node_types" name="types" size=11 multiple>
             <option value="Actor" selected="selected">Actors</option>
             <option value="Backdoor" selected="selected">Backdoors</option>
             <option value="Campaign" selected="selected">Campaigns</option>
