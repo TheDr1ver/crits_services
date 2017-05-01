@@ -190,7 +190,7 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
                     campaign = name + " (" + str(total) + ")"
                     campaign_href = reverse('crits.core.views.details', args=('Campaign', campaign_id))
 
-
+                    n = {}
                     n['label'] = campaign
                     n['url'] = campaign_href
                     n['type'] = n['group'] = 'Campaign'
